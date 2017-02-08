@@ -3,11 +3,12 @@ var GameState = {
     this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
     this.scale.pageAlignHorizontally = true;
     this.scale.pageAlignVertically = true;
+    this.game.world.setBounds(0, 0, 360, 700);
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     this.game.physics.arcade.gravity.y = 1000;
     this.cursors = this.game.input.keyboard.createCursorKeys();
     this.RUNNING_SPEED = 180;
-    this.JUMPING_SPEED = 450;
+    this.JUMPING_SPEED = 500;
   },
 
   preload: function() {
@@ -17,23 +18,28 @@ var GameState = {
     this.load.image('arrow', 'assets/images/arrow.png');
     this.load.image('button', 'assets/images/button.png');
 
-    this.load.spritesheet('players', 'assets/images/spritesheet_players.png', 128, 257, 55);
+    this.load.spritesheet('player', 'assets/images/player.png', 66, 90, 11, 1, 1);
+
+    this.load.text('level', 'assets/data/level.json');
   },
 
   create: function() {
+    this.levelData = JSON.parse(this.game.cache.getText('level'));
+
     this.createGround();
     this.createPlatforms();
 
-    this.player = this.game.add.sprite(100, 100, 'players', 5);
+    this.player = this.game.add.sprite(this.levelData.playerData.x, this.levelData.playerData.y, 'player');
     this.game.physics.arcade.enable(this.player);
     this.player.anchor.setTo(0.5);
-    this.player.scale.setTo(0.3);
+    this.player.scale.setTo(0.5);
     this.player.animations.add('walk', [20, 12], 8, true);
     this.player.customParams = {
       mustJump: false,
       movingLeft: false,
       movingRight: false
     };
+    this.game.camera.follow(this.player);
 
     this.createOnscreenControls();
   },
@@ -77,19 +83,12 @@ var GameState = {
     this.platforms = this.game.add.group();
     this.platforms.enableBody = true;
 
-
-    var platformData = [
-      { "x": 0, "y": 430 },
-      { "x": 45, "y": 560 },
-      { "x": 90, "y": 290 },
-      { "x": 0, "y": 140 }
-    ];
-    console.log(this.platforms)
-
-    var platform;
-    platformData.forEach(function(element){
-      platform = this.platforms.create(element.x, element.y, 'platform');
-      platform.scale.set(0.3);
+    var platform, platformLength = 6;
+    this.levelData.platformData.forEach(function(element) {
+      for(var i = 0; i < platformLength; i++){
+        platform = this.platforms.create(element.x + 35 * i, element.y, 'platform');
+        platform.scale.set(0.3);
+      }  
     }, this);
 
     this.platforms.setAll('body.immovable', true);
@@ -97,7 +96,8 @@ var GameState = {
   },
 
   createOnscreenControls: function() {
-    this.leftArrow = this.game.add.button(40, this.game.world.height - 30, 'arrow');
+    this.leftArrow = this.game.add.button(40, 560, 'arrow');
+    this.leftArrow.fixedToCamera = true;
     this.leftArrow.anchor.setTo(0.5);
     this.leftArrow.scale.setTo(-0.2, 0.2);
     this.leftArrow.alpha = 0.7;
@@ -114,7 +114,8 @@ var GameState = {
       this.player.customParams.movingLeft = false;
     }, this);
 
-    this.rightArrow = this.game.add.button(120, this.game.world.height - 30, 'arrow');
+    this.rightArrow = this.game.add.button(120, 560, 'arrow');
+    this.rightArrow.fixedToCamera = true;
     this.rightArrow.anchor.setTo(0.5);
     this.rightArrow.scale.setTo(0.2);
     this.rightArrow.alpha = 0.7;
@@ -132,7 +133,8 @@ var GameState = {
     }, this);
 
 
-    this.actionButton = this.game.add.button(this.game.world.width - 40, this.game.world.height - 35, 'button');
+    this.actionButton = this.game.add.button(this.game.world.width - 40, 560, 'button');
+    this.actionButton.fixedToCamera = true;
     this.actionButton.anchor.setTo(0.5);
     this.actionButton.scale.setTo(0.3);
     this.actionButton.alpha = 0.7;
